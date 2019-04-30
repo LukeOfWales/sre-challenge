@@ -1,0 +1,13 @@
+---
+- fail: 
+    msg: "I require {{ item }}  to be defined. Do this in the vars.yaml"
+  loop:
+    - "path_to_private_key"
+    - "path_to_public_key"
+    - "keypair_name"
+    - "region"
+    - "iam_role.name"
+    - "security_group.name"
+    - "prometheus_web_listen_address"
+    - "ami_id"
+  when: "{{ item }} is undefined "

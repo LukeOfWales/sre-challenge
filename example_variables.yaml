@@ -1,0 +1,10 @@
+path_to_public_key: /root/.ssh/id_rsa.pub
+path_to_private_key: /root/.ssh/id_rsa
+keypair_name: my_keypair
+ami_id: "ami-08d658f84a6d84a80"
+region: eu-west-1
+vpc_name: my_vpc
+iam_role:
+  name: my_iam_role
+security_group:
+  name: my_security_group

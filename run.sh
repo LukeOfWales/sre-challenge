@@ -1,0 +1,1 @@
+ansible-playbook playbook.yaml -b --extra-vars @example_variables.yaml

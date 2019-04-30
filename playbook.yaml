@@ -1,0 +1,37 @@
+---
+- hosts: localhost
+  roles:
+     - pre-flight-checks
+     - createInfra
+     - createInstance
+
+- hosts: all
+  gather_facts: False
+  become: true
+  tasks:
+  - name: install python 2
+    raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+
+- hosts: webservers
+  roles:
+     - installDocker
+     - applicationStuff
+     - testFunctionality
+
+- hosts: all
+  roles:
+  - cloudalchemy.prometheus
+  - cloudalchemy.node-exporter
+  vars:
+    prometheus_targets:
+      node:
+      - targets:
+        - localhost:9100
+        labels:
+          env: demosite
+
+- hosts: webservers
+  roles:
+    - cloudalchemy.grafana
+
+

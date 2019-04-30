@@ -1,0 +1,32 @@
+---
+- name: "copy static webpage to webserver"
+  copy:
+    src: index.txt
+    dest: /home/ubuntu/
+
+- name: "copy nginx config to webserver"
+  copy:
+    src: nginx.conf
+    dest: /home/ubuntu/
+
+- name: Generate self-signed SSL certificate
+  become: yes
+  command:
+    openssl req -new -nodes -x509 -subj "{{ ssl_certificate_subject }}" -days {{ ssl_certificate_days }} -keyout {{ ssl_certificate_key }} -out {{ ssl_certificate }} -extensions v3_ca
+  args:
+    creates: "{{ ssl_certificate }}"
+
+
+- name: Deploy the NGINX container
+  docker_container:
+    name: nginx01
+    image: nginx
+    state: started
+    restart: yes
+    volumes:
+     - /home/ubuntu/index.txt:/var/www/html/index.txt
+     - /home/ubuntu/nginx.conf:/etc/nginx/conf.d/default.conf
+     - /etc/ssl/:/etc/ssl
+    ports:
+     - "80:80"
+     - "443:443"

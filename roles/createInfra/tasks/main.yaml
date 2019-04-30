@@ -1,0 +1,76 @@
+---
+- name: Create IAM Managed Policy
+  iam_managed_policy:
+    policy_name: "ManagedPolicy"
+    policy_description: "Example policy allowing all permissions"
+    policy: "{{ lookup('file', 'policy.json') }}"
+    state: present
+
+- name: Upload key to AWS
+  ec2_key:
+    name: "{{keypair_name}}"
+    region: "{{region}}"
+    key_material: "{{ lookup('file', '{{path_to_public_key}}') }}"
+
+- name: Create a VPC
+  ec2_vpc_net:
+    name: "{{vpc_name}}"
+    cidr_block: 10.0.0.0/16
+    region: "{{region}}"
+    tags:
+      name: "{{vpc_name}}"
+
+- name: Gather facts on vpc 
+  ec2_vpc_net_facts:
+    region: "{{region}}"
+    filters: 
+      "tag:name": "{{vpc_name}}"
+  register: ec2_vpc_facts
+
+- name: Create internet gateway
+  ec2_vpc_igw:
+    region: "{{region}}"
+    vpc_id:  "{{ec2_vpc_facts.vpcs[0].vpc_id}}"
+    state: present
+  register: igw
+
+- name: Create subnet for webserver 
+  ec2_vpc_subnet:
+    state: present
+    region: "{{region}}"
+    vpc_id: "{{ec2_vpc_facts.vpcs[0].vpc_id}}"
+    cidr: 10.0.0.0/16
+    resource_tags:
+      Name: webserver subnet
+  register: webserver_subnet
+
+- name: Set up public subnet route table
+  ec2_vpc_route_table:
+    vpc_id:  "{{ec2_vpc_facts.vpcs[0].vpc_id}}"
+    region: "{{region}}"
+    tags:
+      Name: Public
+    subnets:
+      - "{{ webserver_subnet.subnet.id }}"
+    routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ igw.gateway_id }}"
+  register: public_route_table
+
+
+- name: Create security group for VPC
+  ec2_group:
+    name: "{{security_group.name}}"
+    description: Simple sg for exercise/demo
+    vpc_id: "{{ec2_vpc_facts.vpcs[0].vpc_id}}"
+    region: "{{region}}"
+    rules:
+      - proto: tcp
+        ports:
+        - 80
+        - 443
+        - 9090
+        - 3000
+        - 22
+        cidr_ip: 0.0.0.0/0
+        rule_desc: Ports required for services within the VPC

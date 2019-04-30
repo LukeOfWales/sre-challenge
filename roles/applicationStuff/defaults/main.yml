@@ -1,0 +1,13 @@
+---
+
+# Certificate subject
+ssl_certificate_subject: "/C=UK/ST=Wales/L=Cardiff/O=SRE & Co/CN={{ ansible_fqdn }}"
+
+# Certificate validity (days)
+ssl_certificate_days: 365
+
+# Server path to SSL certificate
+ssl_certificate: /etc/ssl/certs/webserver.crt
+
+# Server path to SSL certificate key
+ssl_certificate_key: /etc/ssl/certs/webserver.key

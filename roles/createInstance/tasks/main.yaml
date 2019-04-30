@@ -1,0 +1,35 @@
+- ec2:
+    key_name: "{{keypair_name}}"
+    region: "{{region}}"
+    group: "{{security_group.name}}"
+    instance_type: t2.micro
+    image: "{{ ami_id }}"
+    exact_count: 1
+    wait: yes
+    wait_timeout: 500
+    vpc_subnet_id: "{{webserver_subnet.subnet.id}}" 
+    assign_public_ip: yes
+    instance_tags:
+      Name: webservers
+    count_tag:
+      Name: webservers
+  register: ec2_facts
+
+- set_fact:
+    instance_id: "{{ec2_facts.tagged_instances[0].id}}"
+    instance_ip: "{{ec2_facts.tagged_instances[0].public_ip}}"
+    cacheable: true
+
+- name: Add new host to inventory
+  add_host:
+    name: "{{instance_id}}"
+    ansible_ssh_host: "{{instance_ip}}"
+    ansible_ssh_user: ubuntu
+    ansible_ssh_private_key_file: "{{path_to_private_key}}"
+    group: "webservers"
+
+- name: Waits for port 22 of any IP to close active connections, don't start checking for 10 seconds
+  wait_for:
+    host: "{{instance_ip}}"
+    port: 22
+    delay: 10

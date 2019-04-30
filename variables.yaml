@@ -1,0 +1,10 @@
+path_to_public_key:
+path_to_private_key:
+keypair_name:
+ami_id:
+region:
+vpc_name:
+iam_role:
+  name:
+security_group:
+  name:

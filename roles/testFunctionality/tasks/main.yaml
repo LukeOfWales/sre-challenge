@@ -1,0 +1,45 @@
+---
+- name: Collect facts
+  delegate_to: 127.0.0.1
+  ec2_instance_facts:
+    region: "{{region}}"
+    instance_ids:
+      - "{{inventory_hostname}}"
+  register: ec2_facts
+
+- set_fact:
+    instance_domain: http://{{ ec2_facts.instances[0].network_interfaces[0].association.public_ip }}:80
+    secure_instance_domain: https://{{ ec2_facts.instances[0].network_interfaces[0].association.public_ip }}:443
+  
+# Basic HTTP checks to confirm that nginx configuration is correct
+- name: Check port 80 redirect is in place
+  uri:
+    url: "{{instance_domain}} "
+    validate_certs: no
+    follow_redirects: no
+    return_content: yes
+    status_code: 301
+
+- debug:
+    msg: "Equivilent of running curl -vL {{ instance_domain }} "
+
+- name: Check port 80 redirect is in place and follow
+  uri:
+    follow_redirects: all
+    return_content: yes
+    validate_certs: no
+    url: "{{instance_domain}} "
+    status_code: 200
+
+- debug:
+    msg: "Equivilent of running curl -vLk {{ instance_domain }} "
+
+- name: Check port 443 redirect is in place
+  uri:
+    return_content: yes
+    validate_certs: no
+    url: "{{secure_instance_domain}}"
+    status_code: 200
+
+- debug:
+    msg: "Equivilent of running curl -vLk {{ secure_instance_domain }} "
